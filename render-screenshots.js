@@ -50,9 +50,16 @@ const seedState = async (page, state) => {
   });
 
   await page.goto(locationFor("index.html"), { waitUntil: "domcontentloaded" });
+  const homeQr = page.locator(".home-share-qr");
+  if ((await homeQr.count()) !== 1 || !(await homeQr.getAttribute("src"))?.endsWith("素材图片/qianfu-share-qr.png")) {
+    throw new Error("首页二维码异常");
+  }
   await page.screenshot({ path: path.join(output, "01-首页.png") });
 
   await page.goto(locationFor("overview.html"), { waitUntil: "domcontentloaded" });
+  if ((await page.locator(".overview-intro h1").textContent()) !== "先熟悉一下你的奇葩同事") {
+    throw new Error("同事一览标题异常");
+  }
   await page.screenshot({ path: path.join(output, "02-同事一览表.png") });
 
   await page.goto(locationFor("quiz.html"), { waitUntil: "domcontentloaded" });
@@ -83,6 +90,10 @@ const seedState = async (page, state) => {
   await page.screenshot({ path: path.join(output, "04-准备看结果.png") });
 
   await page.goto(locationFor("result.html"), { waitUntil: "domcontentloaded" });
+  const resultHeight = await page.locator(".result-page").evaluate((node) => node.scrollHeight);
+  if (resultHeight > 844) {
+    throw new Error(`结果页超出单屏高度: ${resultHeight}px`);
+  }
   await page.screenshot({ path: path.join(output, "05-结果页-首屏.png") });
   await page.screenshot({ path: path.join(output, "05-结果页-全页.png"), fullPage: true });
   const composition = await page.locator(".composition-percent").allTextContents();
@@ -94,17 +105,18 @@ const seedState = async (page, state) => {
   if ((await qrCode.count()) !== 1 || !(await qrCode.getAttribute("src"))?.endsWith("素材图片/qianfu-share-qr.png")) {
     throw new Error("结果页二维码异常");
   }
-  if ((await page.getByRole("button", { name: "下载到相册 以便分享" }).count()) !== 1) {
-    throw new Error("结果页缺少长图下载按钮");
+  if ((await page.locator(".result-share-hint").textContent()) !== "截屏分享给同事  扫码来答题") {
+    throw new Error("结果页缺少截屏分享提示");
   }
-  await page.getByRole("button", { name: "分享给同事" }).click();
-  const shareField = page.locator(".share-link-field");
-  const shareText = await shareField.inputValue();
-  if (shareText !== "复制粘贴这个网址，看看你是《潜伏里的谁》：https://gxxmst1225.github.io/qianfu/") {
-    throw new Error(`分享字段异常: ${shareText}`);
+  if ((await page.locator(".result-share-url").textContent()) !== "复制网址 https://gxxmst1225.github.io/qianfu/") {
+    throw new Error("结果页复制网址异常");
   }
-  await page.screenshot({ path: path.join(output, "05-分享弹窗.png") });
-  await page.getByRole("button", { name: "关闭" }).click();
+  if (await page.getByRole("button", { name: "分享给同事" }).count() !== 0) {
+    throw new Error("结果页仍有分享按钮");
+  }
+  if (await page.getByRole("button", { name: "下载到相册 以便分享" }).count() !== 0) {
+    throw new Error("结果页仍有下载按钮");
+  }
 
   await page.goto(locationFor("colleagues.html"), { waitUntil: "domcontentloaded" });
   await page.screenshot({ path: path.join(output, "06-同事底细-首屏.png") });
