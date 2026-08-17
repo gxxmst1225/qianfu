@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>答题页</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="quiz">
+  <main class="page quiz-page">
+    <header class="site-bar quiz-bar">
+      <a class="back-link" href="overview.html" aria-label="返回同事一览表">←</a>
+      <span>天津站 · 人事档案</span>
+      <span id="quiz-count" class="minor">1 / 27</span>
+    </header>
+    <section class="quiz-head">
+      <div class="quiz-head-row"><span id="quiz-section">第一大题 选择题</span><span id="quiz-progress-value">1 / 27</span></div>
+      <div class="quiz-progress" aria-hidden="true"><span id="quiz-progress-bar"></span></div>
+    </section>
+    <div id="quiz-paper-root" class="quiz-paper-root"></div>
+    <footer class="quiz-actions">
+      <button id="quiz-previous" class="poster-button alt" type="button">上一题</button>
+      <button id="quiz-next" class="poster-button" type="button">下一题</button>
+    </footer>
+  </main>
+  <script src="app-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
