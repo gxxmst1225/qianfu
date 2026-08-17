@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>计数</title>
+</head>
+<body>
+  <span id="busuanzi_value_page_pv">0</span>
+  <script>
+    (() => {
+      "use strict";
+
+      const scope = new URLSearchParams(window.location.search).get("scope");
+      if (!scope || !/^(total-qianfu-reset-20260817|daily-qianfu-\d{4}-\d{2}-\d{2})$/.test(scope)) {
+        return;
+      }
+
+      // Give each reset or calendar day a distinct Busuanzi page key.
+      try {
+        window.history.replaceState(null, "", `visitor-counter-${scope}.html`);
+      } catch (error) {
+        // File-based previews do not have a mutable origin; production pages do.
+      }
+
+      const valueElement = document.querySelector("#busuanzi_value_page_pv");
+      const report = () => {
+        const value = valueElement.textContent.trim();
+        if (/^\d+$/.test(value) && window.parent !== window) {
+          window.parent.postMessage({
+            type: "qianfu-visitor-counter",
+            scope,
+            value,
+          }, window.location.origin);
+        }
+      };
+
+      const observer = new MutationObserver(report);
+      observer.observe(valueElement, { characterData: true, childList: true, subtree: true });
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.referrerPolicy = "no-referrer-when-downgrade";
+      script.src = "https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js";
+      document.head.append(script);
+    })();
+  </script>
+</body>
+</html>

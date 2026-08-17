@@ -212,6 +212,75 @@
     parent.append(image);
   };
 
+  const getShanghaiDate = () => {
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        day: "2-digit",
+        month: "2-digit",
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+      }).formatToParts(new Date());
+      const values = {};
+      parts.forEach((part) => {
+        values[part.type] = part.value;
+      });
+      return `${values.year}-${values.month}-${values.day}`;
+    } catch (error) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  };
+
+  const loadVisitorCounter = () => {
+    const container = document.querySelector("[data-visitor-counter]");
+    if (!container) {
+      return;
+    }
+
+    const totalElement = container.querySelector("[data-counter-total]");
+    const dailyElement = container.querySelector("[data-counter-daily]");
+    const scopes = new Map([
+      ["total-qianfu-reset-20260817", totalElement],
+      [`daily-qianfu-${getShanghaiDate()}`, dailyElement],
+    ]);
+
+    const receiveCount = (event) => {
+      if (event.origin !== window.location.origin || event.source === window) {
+        return;
+      }
+      const payload = event.data;
+      if (!payload || payload.type !== "qianfu-visitor-counter") {
+        return;
+      }
+      const target = scopes.get(payload.scope);
+      if (!target || !/^\d+$/.test(String(payload.value))) {
+        return;
+      }
+      target.textContent = String(payload.value);
+    };
+
+    window.addEventListener("message", receiveCount);
+
+    const load = () => {
+      scopes.forEach((target, scope) => {
+        if (!target) {
+          return;
+        }
+        const frame = document.createElement("iframe");
+        frame.className = "visitor-counter-frame";
+        frame.title = "";
+        frame.tabIndex = -1;
+        frame.setAttribute("aria-hidden", "true");
+        frame.src = `visitor-counter.html?scope=${encodeURIComponent(scope)}`;
+        document.body.append(frame);
+      });
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(load, { timeout: 3000 });
+    } else {
+      window.setTimeout(load, 1500);
+    }
+  };
+
   const bindQuizStarters = () => {
     document.querySelectorAll("[data-start-quiz]").forEach((link) => {
       link.addEventListener("click", (event) => {
@@ -302,11 +371,7 @@
 
       paperCopy.append(options);
       const paper = make("section", "quiz-paper");
-      const art = document.createElement("img");
-      art.className = "paper-art";
-      art.src = "素材图片/天津站空白纸.png";
-      art.alt = "天津站人事档案纸张";
-      paper.append(art, paperCopy);
+      paper.append(paperCopy);
       root.replaceChildren(paper);
 
       previous.disabled = state.current === 0;
@@ -516,6 +581,7 @@
   };
 
   bindQuizStarters();
+  loadVisitorCounter();
   const page = document.body.dataset.page;
   if (page === "overview") {
     renderOverview();

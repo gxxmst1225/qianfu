@@ -237,6 +237,16 @@ a:focus-visible {
   color: rgba(247, 231, 197, 0.34);
 }
 
+.visitor-counter-frame {
+  position: fixed;
+  z-index: -1;
+  width: 1px;
+  height: 1px;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Overview */
 .overview-page {
   padding-bottom: max(22px, env(safe-area-inset-bottom));
@@ -369,7 +379,7 @@ a:focus-visible {
   min-height: 560px;
   position: relative;
   overflow: hidden;
-  background: var(--paper) url("素材图片/天津站空白纸.png") top center / 100% auto no-repeat;
+  background: var(--paper) url("素材图片/天津站空白纸.jpg") top center / 100% auto no-repeat;
 }
 
 .quiz-paper::before {
