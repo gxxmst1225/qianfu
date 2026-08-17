@@ -90,10 +90,17 @@ const seedState = async (page, state) => {
   if (composition.length !== 3 || compositionTotal !== 100) {
     throw new Error(`角色元素占比异常: ${composition.join(", ")}`);
   }
+  const qrCode = page.locator(".result-share-qr");
+  if ((await qrCode.count()) !== 1 || !(await qrCode.getAttribute("src"))?.endsWith("素材图片/qianfu-share-qr.png")) {
+    throw new Error("结果页二维码异常");
+  }
+  if ((await page.getByRole("button", { name: "下载到相册 以便分享" }).count()) !== 1) {
+    throw new Error("结果页缺少长图下载按钮");
+  }
   await page.getByRole("button", { name: "分享给同事" }).click();
   const shareField = page.locator(".share-link-field");
   const shareText = await shareField.inputValue();
-  if (shareText !== "复制粘贴这个网址，看看你是《潜伏里的谁》：www.xxxxxx.com") {
+  if (shareText !== "复制粘贴这个网址，看看你是《潜伏里的谁》：https://gxxmst1225.github.io/qianfu/") {
     throw new Error(`分享字段异常: ${shareText}`);
   }
   await page.screenshot({ path: path.join(output, "05-分享弹窗.png") });

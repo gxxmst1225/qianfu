@@ -99,7 +99,9 @@
     PROFESSIONAL_TERMS.sort((left, right) => right.length - left.length).map(escapeRegExp).join("|"),
     "g",
   );
-  const SHARE_FIELD_TEXT = "复制粘贴这个网址，看看你是《潜伏里的谁》：www.xxxxxx.com";
+  const SITE_URL = "https://gxxmst1225.github.io/qianfu/";
+  const SHARE_FIELD_TEXT = `复制粘贴这个网址，看看你是《潜伏里的谁》：${SITE_URL}`;
+  let html2canvasLoader;
 
   const createState = () => ({
     version: 3,
@@ -212,6 +214,8 @@
     parent.append(image);
   };
 
+  const overviewAvatarSource = (source) => source.replace(/^头像\//, "头像/同事一览专用/");
+
   const getShanghaiDate = () => {
     try {
       const parts = new Intl.DateTimeFormat("en-US", {
@@ -301,7 +305,7 @@
     data.overview.entries.forEach((entry) => {
       const item = make("article", "overview-item");
       const avatar = make("div", "overview-avatar");
-      appendAvatar(avatar, entry.image, entry.name, "overview-avatar-image");
+      appendAvatar(avatar, overviewAvatarSource(entry.image), entry.name, "overview-avatar-image");
 
       const content = make("div", "overview-copy");
       content.append(make("h2", "overview-name", `${entry.name}——${entry.tag}`));
@@ -480,6 +484,95 @@
     field.select();
   };
 
+  const loadHtml2Canvas = () => {
+    if (typeof window.html2canvas === "function") {
+      return Promise.resolve(window.html2canvas);
+    }
+    if (html2canvasLoader) {
+      return html2canvasLoader;
+    }
+
+    html2canvasLoader = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = "vendor/html2canvas.min.js";
+      script.onload = () => {
+        if (typeof window.html2canvas === "function") {
+          resolve(window.html2canvas);
+          return;
+        }
+        reject(new Error("html2canvas failed to initialize"));
+      };
+      script.onerror = () => reject(new Error("html2canvas failed to load"));
+      document.head.append(script);
+    });
+
+    html2canvasLoader.catch(() => {
+      html2canvasLoader = undefined;
+    });
+    return html2canvasLoader;
+  };
+
+  const canvasToBlob = (canvas) => new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+        return;
+      }
+      reject(new Error("Image export failed"));
+    }, "image/png");
+  });
+
+  const downloadResultImage = async (button, roleName) => {
+    const resultPage = document.querySelector(".result-page");
+    if (!resultPage || button.dataset.exporting === "true") {
+      return;
+    }
+
+    const originalLabel = button.textContent;
+    button.dataset.exporting = "true";
+    button.disabled = true;
+    button.textContent = "正在生成";
+
+    try {
+      const html2canvas = await loadHtml2Canvas();
+      await document.fonts?.ready;
+      const canvas = await html2canvas(resultPage, {
+        backgroundColor: "#4c1720",
+        logging: false,
+        scale: Math.min(Math.max(window.devicePixelRatio || 1, 1), 2),
+        useCORS: true,
+        windowHeight: resultPage.scrollHeight,
+        windowWidth: resultPage.scrollWidth,
+        onclone: (clonedDocument) => {
+          const clonedButton = clonedDocument.querySelector("[data-download-result]");
+          if (clonedButton) {
+            clonedButton.disabled = false;
+            clonedButton.textContent = originalLabel;
+          }
+        },
+      });
+      const blob = await canvasToBlob(canvas);
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `qianfu-result-${roleName}.png`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
+      button.textContent = "已下载";
+    } catch (error) {
+      button.textContent = "请重试";
+    } finally {
+      window.setTimeout(() => {
+        button.disabled = false;
+        button.dataset.exporting = "false";
+        button.textContent = originalLabel;
+      }, 1800);
+    }
+  };
+
   const topRoleComposition = (scores) => {
     const topRoles = data.roles
       .map((role, index) => ({ role, index, score: scores[role.name] }))
@@ -520,6 +613,25 @@
     return section;
   };
 
+  const renderResultSharePanel = () => {
+    const panel = make("section", "result-share-panel");
+    const qr = document.createElement("img");
+    qr.className = "result-share-qr";
+    qr.src = "素材图片/qianfu-share-qr.png";
+    qr.alt = "扫码打开测测职场里的你，是《潜伏》里的谁";
+    qr.width = 480;
+    qr.height = 480;
+    qr.decoding = "async";
+
+    const copy = make("div", "result-share-copy");
+    copy.append(
+      make("p", "result-share-caption", "测测职场里 你是《潜伏》里的谁"),
+      make("p", "result-share-url", SITE_URL),
+    );
+    panel.append(qr, copy);
+    return panel;
+  };
+
   const renderResult = () => {
     const root = document.querySelector("#result-root");
     if (!root) {
@@ -546,15 +658,20 @@
     role.analysis.forEach((paragraph) => archive.append(makeAnalysisParagraph("result-analysis", paragraph)));
     fragment.append(archive);
     fragment.append(renderRoleComposition(scores));
+    fragment.append(renderResultSharePanel());
 
     const actions = make("div", "result-actions");
+    const download = make("button", "poster-button alt result-download", "下载到相册\n以便分享");
+    download.type = "button";
+    download.dataset.downloadResult = "true";
+    download.addEventListener("click", () => downloadResultImage(download, role.name));
     const details = make("a", "poster-button alt", "偷看其他同事底细");
     details.href = "colleagues.html";
     const share = make("button", "poster-button", "分享给同事");
     share.type = "button";
     share.id = "share-result";
     share.addEventListener("click", showShareDialog);
-    actions.append(details, share);
+    actions.append(download, details, share);
     fragment.append(actions);
 
     root.replaceChildren(fragment);
