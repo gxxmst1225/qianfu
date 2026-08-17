@@ -825,7 +825,8 @@ a:focus-visible {
   min-width: 0;
   min-height: 42px;
   padding: 8px 10px;
-  font-size: 13px;
+  font-size: 26px;
+  font-weight: 700;
   overflow-wrap: anywhere;
   white-space: pre-line;
 }
@@ -876,7 +877,8 @@ a:focus-visible {
 .result-share-hint {
   margin: 5px 0 0;
   color: var(--gold);
-  font-size: 12px;
+  font-size: 24px;
+  font-weight: 700;
   line-height: 1.35;
   white-space: pre;
 }
@@ -1155,7 +1157,8 @@ a:focus-visible {
 
   .result-share-hint {
     margin-top: 3px;
-    font-size: 10px;
+    font-size: 20px;
+    font-weight: 700;
     line-height: 1.2;
   }
 
@@ -1165,9 +1168,10 @@ a:focus-visible {
   }
 
   .result-actions .poster-button {
-    min-height: 30px;
+    min-height: 44px;
     padding: 5px 8px;
-    font-size: 11px;
+    font-size: 22px;
+    font-weight: 700;
     line-height: 1.2;
   }
 }
@@ -1271,9 +1275,13 @@ a:focus-visible {
     padding: 2px;
   }
 
-  .result-share-caption,
-  .result-share-hint {
+  .result-share-caption {
     font-size: 9px;
+  }
+
+  .result-share-hint {
+    font-size: 18px;
+    font-weight: 700;
   }
 
   .result-share-url {
@@ -1285,9 +1293,10 @@ a:focus-visible {
   }
 
   .result-actions .poster-button {
-    min-height: 26px;
+    min-height: 40px;
     padding: 4px 7px;
-    font-size: 10px;
+    font-size: 20px;
+    font-weight: 700;
   }
 }
 
