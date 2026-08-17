@@ -100,7 +100,6 @@
     "g",
   );
   const SHARE_FIELD_TEXT = "复制粘贴这个网址，看看你是《潜伏里的谁》：www.xxxxxx.com";
-  const DAILY_VISITOR_NAMESPACE = "gxxmst1225-qianfu";
 
   const createState = () => ({
     version: 3,
@@ -211,41 +210,6 @@
     image.alt = alt;
     image.loading = "lazy";
     parent.append(image);
-  };
-
-  const renderDailyVisitorCount = () => {
-    const count = document.querySelector("#daily-visitor-count");
-    if (!count) {
-      return;
-    }
-
-    const dateParts = new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Shanghai",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(new Date()).reduce((parts, part) => ({ ...parts, [part.type]: part.value }), {});
-    const date = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
-    const localKey = `qianfu-daily-visitor:${date}`;
-    const alreadyCounted = window.localStorage.getItem(localKey) === "1";
-    const action = alreadyCounted ? "get" : "hit";
-    const endpoint = `https://api.countapi.xyz/${action}/${DAILY_VISITOR_NAMESPACE}/${date}`;
-
-    fetch(endpoint, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("Visitor counter unavailable"))))
-      .then((payload) => {
-        const value = Number(payload.value);
-        if (!Number.isFinite(value)) {
-          return;
-        }
-        count.textContent = String(value);
-        if (!alreadyCounted) {
-          window.localStorage.setItem(localKey, "1");
-        }
-      })
-      .catch(() => {
-        count.textContent = "----";
-      });
   };
 
   const bindQuizStarters = () => {
@@ -552,7 +516,6 @@
   };
 
   bindQuizStarters();
-  renderDailyVisitorCount();
   const page = document.body.dataset.page;
   if (page === "overview") {
     renderOverview();
